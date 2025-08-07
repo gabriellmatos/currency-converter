@@ -4,6 +4,7 @@ const amount = document.getElementById('amount');
 const rate = document.getElementById('rate');
 const dollarCurrency = document.getElementById('dollar-curr');
 const history = document.getElementById('history');
+const clear = document.getElementById('clear');
 
 const rates = [];
 
@@ -33,21 +34,20 @@ async function fillCurrencySelector() {
 async function calculateRate() {
 	const varCurr = currencies.value;
 	let varRate = 0;
-	let divEl = '';
+	history.innerText = '';
 
-	await fetch('https://open.er-api.com/v6/latest/USD')
-		.then((res) => res.json())
-		.then((data) => {
-			if (data) {
-				varRate = data.rates[currencies.value];
-				rate.innerText = `1 USD = ${data.rates[currencies.value]} ${currencies.value}`;
-				amount.innerText = data.rates[currencies.value] * dollarCurrency.value;
-			}
-		});
+	const responseCurrencies = await fetch('https://open.er-api.com/v6/latest/USD');
+	const dataResponseCurrencies = await responseCurrencies.json();
+
+	if (dataResponseCurrencies) {
+		varRate = dataResponseCurrencies.rates[currencies.value];
+		rate.innerText = `1 USD = ${dataResponseCurrencies.rates[currencies.value]} ${currencies.value}`;
+		amount.innerText = dataResponseCurrencies.rates[currencies.value] * dollarCurrency.value;
+	}
 
 	const newHistoryRates = {
-		id: crypto.randomUUID(),
-		dollar: 'USD',
+		sourceCurrency: 'USD',
+		targetCurrency: varCurr,
 		rate: varRate,
 		amount: amount.innerText,
 	};
@@ -58,19 +58,49 @@ async function calculateRate() {
 		body: JSON.stringify(newHistoryRates),
 	});
 
-	history.innerText = '';
+	const getResponse = await fetch('http://localhost:3000/api/history');
+	const dataGetResponse = await getResponse.json();
 
-	fetch('http://localhost:3000/api/history')
-		.then((res) => res.json())
-		.then((data) => {
-			data.forEach((item) => {
-				history.innerText += JSON.stringify(item) + '\n';
-			});
-		});
+	let htmlTable = `
+		<table>
+			<thead>
+				<tr>
+					<th>Source</th>
+					<th>Target</th>
+					<th>Rate</th>
+					<th>Amount</th>
+				</tr>
+			</thead>
+			<tbody>
+	`;
+
+	dataGetResponse.forEach((item, index) => {
+		htmlTable += `
+			<tr>
+				<td>${item.sourceCurrency}</td>
+				<td>${item.targetCurrency}</td>
+				<td>${item.rate}</td>
+				<td>${item.amount}</td>
+			</tr>
+		`;
+	});
+
+	htmlTable += `</tbody>
+		</table>
+	`;
+
+	history.innerHTML = htmlTable;
 }
 
 initProgram();
 
 button.addEventListener('click', calculateRate);
-dollarCurrency.addEventListener('change', calculateRate);
-currencies.addEventListener('change', calculateRate);
+clear.addEventListener('click', async () => {
+	const deleteResponse = await fetch('http://localhost:3000/api/history', {
+		method: 'DELETE',
+	});
+
+	const dataResponse = await deleteResponse.json();
+	history.innerHTML = '';
+	console.log(dataResponse);
+});
