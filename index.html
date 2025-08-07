@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Currency Converter</title>
+	</head>
+	<body>
+		<div class="container">
+			<div class="source-currency">
+				Dollar Amount:
+				<input type="number" id="dollar-curr" value="1" placeholder="0" />
+			</div>
+			<div class="target-currency">
+				Target Amount:
+				<select id="currencies"></select>
+				<div id="rate"></div>
+				<div id="amount"></div>
+			</div>
+
+			<button type="submit" id="button">Submit</button>
+
+			<div id="history"></div>
+		</div>
+		<script src="script.js"></script>
+	</body>
+</html>
